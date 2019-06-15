@@ -14,13 +14,23 @@ func _ready() -> void:
 
 func create_edges() -> void:
 	randomize()
-	for i in range(0, 6):
+	# Keeps adding edges until we reach a certain amount
+	while graph.get_edges().size() < 6:
 		var x1: float = rand_range(0, max_x)
 		var y1: float = rand_range(0, max_y)
 		var x2: float = rand_range(0, max_x)
 		var y2: float = rand_range(0, max_y)
-		# Maybe we could avoid intersections
-		graph.add_edge(Vector2(x1, y1), Vector2(x2, y2))
+
+		# Add new edges only if doesn't intersect existing ones
+		var inter: bool = false
+		for edge in graph.get_edges():
+			var line := Line2D.new()
+			line.add_point(Vector2(x1, y1))
+			line.add_point(Vector2(x2, y2))
+			inter = inter or intersect(line, edge).get('intersect')
+
+		if not inter:
+			graph.add_edge(Vector2(x1, y1), Vector2(x2, y2))
 
 func intersect(a: Line2D, b: Line2D) -> Dictionary:
 	var a0: Vector2 = a.get_point_position(0)
