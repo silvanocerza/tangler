@@ -6,6 +6,7 @@ var graph: Graph
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	randomize()
 	max_x = get_viewport().size[0]
 	max_y = get_viewport().size[1]
 	graph = load("res://Graph.gd").new()
@@ -13,7 +14,6 @@ func _ready() -> void:
 	create_edges()
 
 func create_edges() -> void:
-	randomize()
 	# Keeps adding edges until we reach a certain amount
 	while graph.get_edges().size() < 6:
 		var x1: float = rand_range(0, max_x)
@@ -54,31 +54,28 @@ func intersect(a: Line2D, b: Line2D) -> Dictionary:
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta) -> void:
-	randomize()
-	# Creates new random line
+	# Creates new random line from existing 
 	var candidate := Line2D.new()
+	var edges: Array = graph.get_edges().duplicate(true)
+	var other_edges: Array = []
 	for i in range(0, 2):
-		var x: float = rand_range(0, max_x)
-		var y: float = rand_range(0, max_y)
-		candidate.add_point(Vector2(x, y))
+		var edge: Line2D = edges[randi() % edges.size()]
+		var a: Vector2 = edge.get_point_position(0)
+		var b: Vector2 = edge.get_point_position(1)
+		other_edges.append(edge)
+		edges.erase(edge)
+		candidate.add_point(lerp(a, b, randf()))
 
-	# Finds intersection with existing lines
-	# If we want we can customize it so that it stops after
-	# two intersections are found
-	var intersections := {}
-	for edge in graph.get_edges():
+	# Discard candidate if insersects another
+	for edge in edges:
 		var i: Dictionary = intersect(candidate, edge)
 		if i.get('intersect'):
-			intersections[edge] = i
+			return
 
-	# Splits intersected edges
-	for edge in intersections:
-		var point: Vector2 = intersections[edge].get('point')
-		graph.add_edge(edge.get_point_position(0), point)
-		graph.add_edge(point, edge.get_point_position(1))
+	# Splits and draw
+	for i in range(0, 2):
+		var edge: Line2D = other_edges[i]
+		graph.add_edge(edge.get_point_position(0), candidate.get_point_position(i))
+		graph.add_edge(candidate.get_point_position(i), edge.get_point_position(1))
 		graph.remove_edge(edge)
-
-	# Creates new edge from candidate line
-	var values: Array = intersections.values()
-	for i in range(0, len(values)):
-		graph.add_edge(values[i-1].get('point'), values[i].get('point'))
+	graph.add_edge(candidate.get_point_position(0), candidate.get_point_position(1))
