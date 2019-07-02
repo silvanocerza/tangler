@@ -9,13 +9,19 @@
 config_version=4
 
 _global_script_classes=[ {
-"base": "Node",
+"base": "Node2D",
 "class": "Graph",
 "language": "GDScript",
 "path": "res://Graph.gd"
+}, {
+"base": "Node",
+"class": "Set",
+"language": "GDScript",
+"path": "res://Set.gd"
 } ]
 _global_script_class_icons={
-"Graph": ""
+"Graph": "",
+"Set": ""
 }
 
 [application]

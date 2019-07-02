@@ -3,13 +3,15 @@ extends Node2D
 var max_x: float
 var max_y: float
 var graph: Graph
+var count: int
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+	count = 0
 	randomize()
 	max_x = get_viewport().size[0]
 	max_y = get_viewport().size[1]
-	graph = load("res://Graph.gd").new()
+	graph = Graph.new()
 	add_child(graph)
 	create_edges()
 
@@ -55,8 +57,11 @@ func intersect(a: Line2D, b: Line2D) -> Dictionary:
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta) -> void:
 	# Creates new random line from existing 
+	print("starting")
 	var candidate := Line2D.new()
-	var edges: Array = graph.get_edges().duplicate(true)
+	print("getting")
+	var edges: Array = graph.get_edges()
+	print("got")
 	var other_edges: Array = []
 	for i in range(0, 2):
 		var edge: Line2D = edges[randi() % edges.size()]
@@ -70,12 +75,14 @@ func _process(delta) -> void:
 	for edge in edges:
 		var i: Dictionary = intersect(candidate, edge)
 		if i.get('intersect'):
+			print("returning")
 			return
+	print("after")
 
-	# Splits and draw
+	# Splits and add new edge
 	for i in range(0, 2):
 		var edge: Line2D = other_edges[i]
+		graph.remove_edge(edge.get_point_position(0), edge.get_point_position(1))
 		graph.add_edge(edge.get_point_position(0), candidate.get_point_position(i))
 		graph.add_edge(candidate.get_point_position(i), edge.get_point_position(1))
-		graph.remove_edge(edge)
 	graph.add_edge(candidate.get_point_position(0), candidate.get_point_position(1))
