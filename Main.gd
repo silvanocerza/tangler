@@ -28,20 +28,18 @@ func create_edges() -> void:
 		# Add new edges only if doesn't intersect existing ones
 		var inter: bool = false
 		for edge in graph.get_edges():
-			var line := Line2D.new()
-			line.add_point(Vector2(x1, y1))
-			line.add_point(Vector2(x2, y2))
+			var line: Array = [Vector2(x1, y1), Vector2(x2, y2)]
 			inter = inter or intersect(line, edge).get('intersect')
 
 		if not inter:
 			graph.add_edge(Vector2(x1, y1), Vector2(x2, y2))
 			edges_added += 1
 
-func intersect(a: Line2D, b: Line2D) -> Dictionary:
-	var a0: Vector2 = a.points[0]
-	var a1: Vector2 = a.points[1]
-	var b0: Vector2 = b.points[0]
-	var b1: Vector2 = b.points[1]
+func intersect(a: Array, b: Array) -> Dictionary:
+	var a0: Vector2 = a[0]
+	var a1: Vector2 = a[1]
+	var b0: Vector2 = b[0]
+	var b1: Vector2 = b[1]
 
 	var sa: Vector2 = a1 - a0
 	var sb: Vector2 = b1 - b0
@@ -60,18 +58,18 @@ func intersect(a: Line2D, b: Line2D) -> Dictionary:
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta) -> void:
 	# Creates new random line from existing 
-	var candidate := Line2D.new()
+	var candidate: Array = []
 	var edges: Array = graph.get_edges()
 	var other_edges: Array = []
 	for i in range(0, 2):
-		var edge: Line2D = edges[randi() % edges.size()]
-		var a: Vector2 = edge.points[0]
-		var b: Vector2 = edge.points[1]
+		var edge: Array = edges[randi() % edges.size()]
+		var a: Vector2 = edge[0]
+		var b: Vector2 = edge[1]
 		other_edges.append(edge)
 		edges.erase(edge)
-		candidate.add_point(lerp(a, b, randf()))
+		candidate.append(lerp(a, b, randf()))
 
-	if candidate.points.size() < 2:
+	if candidate.size() < 2:
 		return
 
 	# Discard candidate if insersects another
@@ -82,8 +80,8 @@ func _process(delta) -> void:
 
 	# Splits and add new edge
 	for i in range(0, 2):
-		var edge: Line2D = other_edges[i]
-		graph.remove_edge(edge.points[0], edge.points[1])
-		graph.add_edge(edge.points[0], candidate.points[i])
-		graph.add_edge(candidate.points[i], edge.points[1])
-	graph.add_edge(candidate.points[0], candidate.points[1])
+		var edge: Array = other_edges[i]
+		graph.remove_edge(edge[0], edge[1])
+		graph.add_edge(edge[0], candidate[i])
+		graph.add_edge(candidate[i], edge[1])
+	graph.add_edge(candidate[0], candidate[1])

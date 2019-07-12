@@ -47,9 +47,7 @@ func get_edges_dfs(node: Vector2, visited: Array) -> Array:
 				continue
 			for e in get_edges_dfs(n, visited):
 				edges.append(e)
-			var edge := Line2D.new()
-			edge.points = [node, n]
-			edges.append(edge)
+			edges.append([node, n])
 	return edges
 
 func draw_graph(node: Vector2, visited: Array) -> void:
