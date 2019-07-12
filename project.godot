@@ -13,15 +13,9 @@ _global_script_classes=[ {
 "class": "Graph",
 "language": "GDScript",
 "path": "res://Graph.gd"
-}, {
-"base": "Node",
-"class": "Set",
-"language": "GDScript",
-"path": "res://Set.gd"
 } ]
 _global_script_class_icons={
-"Graph": "",
-"Set": ""
+"Graph": ""
 }
 
 [application]

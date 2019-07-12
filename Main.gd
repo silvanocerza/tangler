@@ -4,6 +4,7 @@ var max_x: float
 var max_y: float
 var graph: Graph
 var count: int
+export(int) var starting_edges: int = 6
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -17,7 +18,8 @@ func _ready() -> void:
 
 func create_edges() -> void:
 	# Keeps adding edges until we reach a certain amount
-	while graph.get_edges().size() < 6:
+	var edges_added: int = 0
+	while edges_added < starting_edges:
 		var x1: float = rand_range(0, max_x)
 		var y1: float = rand_range(0, max_y)
 		var x2: float = rand_range(0, max_x)
@@ -33,12 +35,13 @@ func create_edges() -> void:
 
 		if not inter:
 			graph.add_edge(Vector2(x1, y1), Vector2(x2, y2))
+			edges_added += 1
 
 func intersect(a: Line2D, b: Line2D) -> Dictionary:
-	var a0: Vector2 = a.get_point_position(0)
-	var a1: Vector2 = a.get_point_position(1)
-	var b0: Vector2 = b.get_point_position(0)
-	var b1: Vector2 = b.get_point_position(1)
+	var a0: Vector2 = a.points[0]
+	var a1: Vector2 = a.points[1]
+	var b0: Vector2 = b.points[0]
+	var b1: Vector2 = b.points[1]
 
 	var sa: Vector2 = a1 - a0
 	var sb: Vector2 = b1 - b0
@@ -57,32 +60,30 @@ func intersect(a: Line2D, b: Line2D) -> Dictionary:
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta) -> void:
 	# Creates new random line from existing 
-	print("starting")
 	var candidate := Line2D.new()
-	print("getting")
 	var edges: Array = graph.get_edges()
-	print("got")
 	var other_edges: Array = []
 	for i in range(0, 2):
 		var edge: Line2D = edges[randi() % edges.size()]
-		var a: Vector2 = edge.get_point_position(0)
-		var b: Vector2 = edge.get_point_position(1)
+		var a: Vector2 = edge.points[0]
+		var b: Vector2 = edge.points[1]
 		other_edges.append(edge)
 		edges.erase(edge)
 		candidate.add_point(lerp(a, b, randf()))
+
+	if candidate.points.size() < 2:
+		return
 
 	# Discard candidate if insersects another
 	for edge in edges:
 		var i: Dictionary = intersect(candidate, edge)
 		if i.get('intersect'):
-			print("returning")
 			return
-	print("after")
 
 	# Splits and add new edge
 	for i in range(0, 2):
 		var edge: Line2D = other_edges[i]
-		graph.remove_edge(edge.get_point_position(0), edge.get_point_position(1))
-		graph.add_edge(edge.get_point_position(0), candidate.get_point_position(i))
-		graph.add_edge(candidate.get_point_position(i), edge.get_point_position(1))
-	graph.add_edge(candidate.get_point_position(0), candidate.get_point_position(1))
+		graph.remove_edge(edge.points[0], edge.points[1])
+		graph.add_edge(edge.points[0], candidate.points[i])
+		graph.add_edge(candidate.points[i], edge.points[1])
+	graph.add_edge(candidate.points[0], candidate.points[1])
