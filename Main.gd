@@ -55,8 +55,7 @@ func intersect(a: Array, b: Array) -> Dictionary:
 	var intersect: bool = p >= 0 && p <= 1 && q >= 0 && q <= 1
 	return {'intersect': intersect, 'point': lerp(a0, a1, p)}
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta) -> void:
+func create_line_v1() -> void:
 	# Creates new random line from existing 
 	var candidate: Array = []
 	var edges: Array = graph.get_edges()
@@ -85,3 +84,46 @@ func _process(delta) -> void:
 		graph.add_edge(edge[0], candidate[i])
 		graph.add_edge(candidate[i], edge[1])
 	graph.add_edge(candidate[0], candidate[1])
+
+func create_line_v2() -> void:
+	# Creates random line
+	var x1: float = rand_range(0, max_x)
+	var y1: float = rand_range(0, max_y)
+	var x2: float = rand_range(0, max_x)
+	var y2: float = rand_range(0, max_y)
+	var candidate: Array = [Vector2(x1, y1), Vector2(x2, y2)]
+
+	var intersections: Array = []
+	var intersected_edges: Array = []
+	var edges: Array = graph.get_edges()
+	while intersections.size() != 2:
+		# Searches all intersections of candidate line
+		for edge in edges:
+			var i := intersect(candidate, edge)
+			if i['intersect']:
+				intersections.append(i['point'])
+				intersected_edges.append(edge)
+
+		# Sanity checks
+		if intersections.size() < 2:
+			return
+		elif intersections.size() == 2:
+			break
+
+		# Cut the candidate to two random intersections and start over
+		candidate[0] = intersections[randi() % intersections.size()]
+		candidate[1] = intersections[randi() % intersections.size()]
+		intersections.clear()
+		intersected_edges.clear()
+	
+	for i in range(0, 2):
+		var edge: Array = intersected_edges[i]
+		graph.remove_edge(edge[0], edge[1])
+		graph.add_edge(edge[0], intersections[i])
+		graph.add_edge(intersections[i], edge[1])
+	graph.add_edge(intersections[0], intersections[1])
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta) -> void:
+#	create_line_v1()
+	create_line_v2()
