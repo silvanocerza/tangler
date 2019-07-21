@@ -5,6 +5,8 @@ var max_y: float
 var graph: Graph
 var count: int
 export(int) var starting_edges: int = 6
+export(float) var minimum_distance: float = 50.0
+export(float) var force_scaling: float = 1.0
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -56,7 +58,7 @@ func intersect(a: Array, b: Array) -> Dictionary:
 	return {'intersect': intersect, 'point': lerp(a0, a1, p)}
 
 func create_line_v1() -> void:
-	# Creates new random line from existing 
+	# Creates new random line from existing
 	var candidate: Array = []
 	var edges: Array = graph.get_edges()
 	var other_edges: Array = []
@@ -85,7 +87,7 @@ func create_line_v1() -> void:
 		graph.add_edge(candidate[i], edge[1])
 	graph.add_edge(candidate[0], candidate[1])
 
-func create_line_v2() -> void:
+func create_line_v2() -> bool:
 	# Creates random line
 	var x1: float = rand_range(0, max_x)
 	var y1: float = rand_range(0, max_y)
@@ -106,7 +108,7 @@ func create_line_v2() -> void:
 
 		# Sanity checks
 		if intersections.size() < 2:
-			return
+			return false
 		elif intersections.size() == 2:
 			break
 
@@ -115,15 +117,40 @@ func create_line_v2() -> void:
 		candidate[1] = intersections[randi() % intersections.size()]
 		intersections.clear()
 		intersected_edges.clear()
-	
+
 	for i in range(0, 2):
 		var edge: Array = intersected_edges[i]
 		graph.remove_edge(edge[0], edge[1])
 		graph.add_edge(edge[0], intersections[i])
 		graph.add_edge(intersections[i], edge[1])
 	graph.add_edge(intersections[0], intersections[1])
+	return true
+
+func move_nodes() -> void:
+	var forces: Dictionary = {}
+	for node in graph.get_nodes():
+		var directions: Array = []
+		for edge in graph.get_edges_bfs(node, 1):
+			var distance: float = node.distance_to(edge)
+			if distance < minimum_distance:
+				continue
+			directions.append(node.direction_to(edge))
+		var sum: Vector2 = Vector2.ZERO
+		for v in directions:
+			sum += v
+		if sum == Vector2.ZERO:
+			continue
+		forces[node] = sum * force_scaling
+
+	for node in forces.keys():
+		var new_position: Vector2 = node + forces[node]
+		if new_position == node:
+			continue
+		graph.move_node(node, new_position)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta) -> void:
 #	create_line_v1()
 	create_line_v2()
+
+	move_nodes()
