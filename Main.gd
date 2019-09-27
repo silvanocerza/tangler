@@ -3,6 +3,7 @@ extends Node2D
 var max_x: float
 var max_y: float
 var graph: Graph
+var initial_nodes: Array
 var count: int
 export(int) var starting_edges: int = 6
 export(float) var minimum_distance: float = 50.0
@@ -36,6 +37,7 @@ func create_edges() -> void:
 		if not inter:
 			graph.add_edge(Vector2(x1, y1), Vector2(x2, y2))
 			edges_added += 1
+	initial_nodes = graph.get_nodes()
 
 func intersect(a: Array, b: Array) -> Dictionary:
 	var a0: Vector2 = a[0]
@@ -128,7 +130,14 @@ func create_line_v2() -> bool:
 
 func move_nodes() -> void:
 	var forces: Dictionary = {}
-	for node in graph.get_nodes():
+	var movable_nodes: Array = graph.get_nodes()
+
+	# We don't want to move the initial nodes otherwise
+	# the web would tend to close a lot
+	for node in initial_nodes:
+		movable_nodes.erase(node)
+
+	for node in movable_nodes:
 		var directions: Array = []
 		for edge in graph.get_edges_bfs(node, 1):
 			var distance: float = node.distance_to(edge)
